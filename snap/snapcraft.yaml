@@ -1,0 +1,44 @@
+name: cascade
+version: new
+summary: Hagiwara Gadget
+description: |
+ Bootloader files and partitoning data to create a
+ bootable Ubuntu Core image for the imx81mmek from NXP.
+type: gadget
+base: core18
+architectures:
+  - build-on: amd64
+    run-on: arm64
+confinement: strict
+grade: stable
+
+parts:
+  uboot:
+    plugin: make
+    source: https://source.codeaurora.org/external/imx/uboot-imx
+    source-branch: imx_v2020.04_5.4.24_2.1.0
+    source-type: git
+    override-build: |
+      cp $SNAPCRAFT_PROJECT_DIR/bl31.bin $SNAPCRAFT_PART_BUILD/
+      cp $SNAPCRAFT_PROJECT_DIR/mx8qm-ahab-container.img $SNAPCRAFT_PART_BUILD/
+      cp $SNAPCRAFT_PROJECT_DIR/mx8qm-mek-scfw-tcm.bin $SNAPCRAFT_PART_BUILD/
+      #cp $SNAPCRAFT_PROJECT_DIR/  
+      export ATF_LOAD_ADDR=0x80000000
+      export BL33_LOAD_ADDR=0x80020000
+      CROSS_COMPILE=aarch64-linux-gnu- make imx8qm_mek_defconfig
+      CROSS_COMPILE=aarch64-linux-gnu- make
+      CROSS_COMPILE=aarch64-linux-gnu- make flash.bin
+      cp  $SNAPCRAFT_PART_BUILD/flash.bin $SNAPCRAFT_PART_INSTALL/
+      #tools/mkenvimage -r -s 131072 -o $SNAPCRAFT_PART_INSTALL/uboot.env $SNAPCRAFT_PROJECT_DIR/uboot.env.in
+      tools/mkenvimage -r -s 8192 -o $SNAPCRAFT_PART_INSTALL/uboot.env $SNAPCRAFT_PROJECT_DIR/uboot.env.in
+      cd $SNAPCRAFT_PART_INSTALL/; ln -s uboot.env uboot.conf
+    build-packages:
+      - libpython2.7-dev
+      - build-essential
+      - bc
+      - device-tree-compiler
+      - gcc-aarch64-linux-gnu
+      - bison
+      - flex
+ 
+ 
