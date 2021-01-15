@@ -41,4 +41,8 @@ parts:
       - bison
       - flex
  
- 
+    override-pull: |
+      snapcraftctl pull
+      set -e
+      echo "Apply patch to uboot to support raw initrd and UC18"
+      git apply -v $SNAPCRAFT_PROJECT_DIR/patch/uboot.patch
