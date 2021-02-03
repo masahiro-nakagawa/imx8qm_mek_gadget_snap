@@ -5,7 +5,7 @@ description: |
  Bootloader files and partitoning data to create a
  bootable Ubuntu Core image for the imx81mmek from NXP.
 type: gadget
-base: core18
+base: core20
 architectures:
   - build-on: amd64
     run-on: arm64
@@ -15,9 +15,10 @@ grade: stable
 parts:
   uboot:
     plugin: make
-    source: https://source.codeaurora.org/external/imx/uboot-imx
-    source-branch: imx_v2020.04_5.4.24_2.1.0
-    source-type: git
+    # source: https://source.codeaurora.org/external/imx/uboot-imx
+    source: uboot-imx
+    #source-branch: imx_v2020.04_5.4.24_2.1.0
+    #source-type: git
     override-build: |
       cp $SNAPCRAFT_PROJECT_DIR/bl31.bin $SNAPCRAFT_PART_BUILD/
       cp $SNAPCRAFT_PROJECT_DIR/mx8qm-ahab-container.img $SNAPCRAFT_PART_BUILD/
@@ -29,9 +30,13 @@ parts:
       CROSS_COMPILE=aarch64-linux-gnu- make
       CROSS_COMPILE=aarch64-linux-gnu- make flash.bin
       cp  $SNAPCRAFT_PART_BUILD/flash.bin $SNAPCRAFT_PART_INSTALL/
-      #tools/mkenvimage -r -s 131072 -o $SNAPCRAFT_PART_INSTALL/uboot.env $SNAPCRAFT_PROJECT_DIR/uboot.env.in
-      tools/mkenvimage -r -s 8192 -o $SNAPCRAFT_PART_INSTALL/uboot.env $SNAPCRAFT_PROJECT_DIR/uboot.env.in
-      cd $SNAPCRAFT_PART_INSTALL/; ln -s uboot.env uboot.conf
+
+      #create uboot.conf
+      touch $SNAPCRAFT_PART_INSTALL/uboot.conf
+      mkimage -A arm64 -O linux -T script -C none -n "boot script" \
+              -d $SNAPCRAFT_PROJECT_DIR/bootscr.bbb $SNAPCRAFT_PART_INSTALL/boot.scr
+
+
     build-packages:
       - libpython2.7-dev
       - build-essential
@@ -40,9 +45,6 @@ parts:
       - gcc-aarch64-linux-gnu
       - bison
       - flex
- 
-    override-pull: |
-      snapcraftctl pull
-      set -e
-      echo "Apply patch to uboot to support raw initrd and UC18"
-      git apply -v $SNAPCRAFT_PROJECT_DIR/patch/uboot.patch
+
+
+
